@@ -96,6 +96,12 @@ Apache旗下的轻量级权限控制框架
 第二步 引入相关依赖
 
 ```xml
+<!--需要导入web场景的启动器，否则项目在启动运行后会立即结束并退出-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-security</artifactId>
@@ -105,3 +111,4 @@ Apache旗下的轻量级权限控制框架
 
 
 第三步 编写Controller进行测试
+

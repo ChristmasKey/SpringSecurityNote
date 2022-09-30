@@ -112,3 +112,86 @@ Apache旗下的轻量级权限控制框架
 
 第三步 编写Controller进行测试
 
+```java
+package com.djn.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Name: TestController
+ * Description: 测试控制器
+ * Copyright: Copyright (c) 2022 MVWCHINA All rights Reserved
+ * Company: 江苏医视教育科技发展有限公司
+ *
+ * @author 丁佳男
+ * @version 1.0
+ * @since 2022-09-26 17:59
+ */
+@RestController
+@RequestMapping("/test")
+public class TestController {
+
+    @GetMapping("/hello")
+    public String add() {
+        return "Hello Security";
+    }
+}
+```
+
+
+
+第四步 在浏览器中访问http://localhost:8899/test/hello，画面如下
+
+![入门案例项目启动页面访问](./images/入门案例项目启动页面访问.png)
+
+出现这个页面说明我们引入的Spring Security已经生效了
+
+**此时我们需要使用Spring Security默认的用户名“user”去登录**
+
+密码在IDEA项目运行着的控制台中查看
+
+![Spring Security的动态密码](./images/Spring Security的动态密码.png)
+
+
+
+### 基本原理
+
+#### 过滤器链
+
+<strong style="color:blue;">Spring Security的本质是一个过滤器链</strong>，有很多过滤器
+
+通过源码，重点查看三个过滤器
+
+**FilterSecurityInterceptor**：<span style="color:green;">这是一个方法级的权限过滤器，基本位于过滤器链的最底部</span>
+
+![FilterSecurityInterceptor](./images/FilterSecurityInterceptor.png)
+
+`super.beforeInvocation(fi)`
+
+- 表示在执行前查看上一个filter是否通过
+
+`filterInvocation.getChain().doFilter(filterInvocation.getRequest(), filterInvocation.getResponse())`
+
+- 表示真正的调用后台的服务
+
+
+
+**ExceptionTranslationFilter**：<span style="color:blue;">是一个异常过滤器，用来处理在认证授权过程中抛出的异常</span>
+
+![ExceptionTranslationFilter](./images/ExceptionTranslationFilter.png)
+
+
+
+**UsernamePasswordAuthenticationFilter**：<span style="color:red;">对/login的POST请求做拦截，校验表单中的用户名、密码</span>
+
+![UsernamePasswordAuthenticationFilter](./images/UsernamePasswordAuthenticationFilter.png)
+
+
+
+#### 过滤器加载过程
+
+过滤器是如何进行加载的？
+
+①使用Spring Security，首先要配置过滤器 **DelegatingFilterProxy**（在SpringBoot中，这一步被自动化配置代替，所以省略了）

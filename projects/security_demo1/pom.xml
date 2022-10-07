@@ -17,6 +17,23 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
+        <!--引入MySQL数据库连接驱动-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <!--引入Druid数据库连接池-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.2.11</version>
+        </dependency>
+        <!--整合Mybatis框架-->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>2.2.2</version>
+        </dependency>
         <!--需要导入web场景的启动器，否则项目在启动运行后会立即结束并退出-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -194,4 +194,232 @@ public class TestController {
 
 过滤器是如何进行加载的？
 
-①使用Spring Security，首先要配置过滤器 **DelegatingFilterProxy**（在SpringBoot中，这一步被自动化配置代替，所以省略了）
+①使用Spring Security，首先要配置过滤器代理 **DelegatingFilterProxy**（在SpringBoot中，这一步被自动化配置代替，所以省略了）
+
+在过滤器代理 **DelegatingFilterProxy** 中的 *doFilter()* 方法中，通过调用初始化方法 *initDelegate()* 得到过滤器链代理 **FilterChainProxy**
+
+![DelegatingFilterProxy](./images/DelegatingFilterProxy.png)
+
+②在过滤器链代理 **FilterChainProxy** 中，通过 *doFilterInternal()* 方法得到所有的过滤器，加载到过滤器链中
+
+![FilterChainProxy](./images/FilterChainProxy.png)
+
+
+
+#### 两个重要的接口
+
+##### UserDetailsService
+
+​    当什么也没有配置的时候，账号和密码是由Spring Security定义生成的。
+
+​    而在实际项目中账号和密码都是从数据库中查询出来的，所以我们要通过自定义逻辑控制**认证逻辑**。
+
+​    如果需要自定义认证逻辑，只需要实现 **UserDetailsService** 接口即可。
+
+
+
+​    **UserDetailsService**接口中只有一个 *loadUserByUsername()* 方法，我们把查询数据库用户名和密码的过程写在这个方法中。
+
+​    ==方法参数 *username* 表示用户名，此值是客户端表单传递过来的数据，默认情况下必须叫username，否则无法接收。==
+
+```java
+public interface UserDetailsService {
+    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+}
+```
+
+​    *loadUserByUsername()* 方法的返回值：**UserDetails**，是系统默认的用户“主体”（接口）
+
+```java
+//表示获取登录用户的所有权限
+Collection<? extends GrantedAuthority> getAuthorities();
+
+//表示获取密码
+String getPassword();
+
+//表示获取用户名
+String getUsername();
+
+//表示判断账户是否过期
+boolean isAccountNonExpired();
+
+//表示判断账户是否被锁定
+boolean isAccountNonLocked();
+
+//表示凭证（密码）是否过期
+boolean isCredentialsNonExpired();
+
+//表示当前用户是否可用
+boolean isEnabled();
+```
+
+​    以下是**UserDetails**实现类
+
+![UserDetails_Hierarchy](./images/UserDetails_Hierarchy.png)
+
+​    以后我们只需要使用**User**这个实体类即可
+
+![User](./images/User.png)
+
+###### UserDetailsService使用步骤
+
+①创建类继承 **UsernamePasswordAuthenticationFilter**，重写三个方法（attemptAuthentication、successfulAuthentication、unsuccessfulAuthentication）
+
+②创建类实现 **UserDetailsService**，编写查询数据库的过程，返回User对象（是安全框架提供的对象）
+
+
+
+##### PasswordEncoder
+
+![PasswordEncoder](./images/PasswordEncoder.png)
+
+**BCryptPasswordEncoder**是Spring Security官方推荐的密码解析器，平时多使用这个解析器。
+
+**BCryptPasswordEncoder**是对bcrypt强散列方法的具体实现。是基于Hash算法实现的单向加密。可以通过strength控制加密强度，默认10。
+
+![PasswordEncoder_Hierarchy](./images/PasswordEncoder_Hierarchy.png)
+
+###### BCryptPasswordEncoder使用案例
+
+```java
+@Test
+public void test01() {
+    //创建密码解析器
+    val encoder = new BCryptPasswordEncoder();
+    //对密码进行加密
+    String stone = encoder.encode("stone");
+    //打印密码密文
+    System.out.println("密文：" + stone);
+    //判断明文密码与密文密码是否匹配
+    boolean matchResult = encoder.matches("stone", stone);
+    //打印匹配结果
+    System.out.println("匹配结果：" + matchResult);
+}
+```
+
+
+
+## Web权限方案
+
+web开发中，如何使用Spring Security做到**认证**和**授权**？
+
+### 一、认证
+
+#### 1.设置登录的用户名和密码
+
+方式一：通过配置文件配置
+
+```properties
+spring.security.user.name=SpringStone
+spring.security.user.password=1234
+spring.security.user.roles=admin
+```
+
+方式二：通过配置类实现
+
+```java
+/**
+ * Name: SecurityConfig
+ * Description: 【Spring Security配置类】
+ * Copyright: Copyright (c) 2022 MVWCHINA All rights Reserved
+ * Company: 江苏医视教育科技发展有限公司
+ * 
+ * @author 丁佳男
+ * @version 1.0
+ * @since 2022/10/7 19:11
+ */
+@Configuration
+public class SecurityConfig {
+
+    /**
+     * 向Spring容器中注入 UserDetailsService
+     *
+     * @return org.springframework.security.core.userdetails.UserDetailsService
+     * @date 2022/10/7 19:15
+     */
+    @Bean
+    public UserDetailsService getUserDetailsService() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String encode = encoder.encode("1111");
+        InMemoryUserDetailsManager users = new InMemoryUserDetailsManager();
+        users.createUser(
+                User.withUsername("SpringStone")
+                        .password(encode)
+                        .roles("admin")
+                        .build()
+        );
+        return users;
+    }
+
+    /**
+     * 向Spring容器中注入 PasswordEncoder
+     *
+     * @return org.springframework.security.crypto.password.PasswordEncoder
+     * @date 2022/10/7 19:13
+     */
+    @Bean
+    public PasswordEncoder getPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+方式三：编写自定义实现类
+
+①创建配置类，注入**PasswordEncoder**
+
+```java
+@Configuration
+public class SecurityCustomConfig {
+
+    @Bean("bCryptPwdEncoder")
+    public PasswordEncoder getPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+②编写实现类，返回User对象，User对象有用户名、密码和操作权限
+
+```java
+@Service
+public class MyUserDetailsService implements UserDetailsService {
+
+    @Resource
+    private PasswordEncoder bCryptPwdEncoder;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        List<GrantedAuthority> authorities =
+                AuthorityUtils.commaSeparatedStringToAuthorityList("admin,user");
+        return new User(username, bCryptPwdEncoder.encode("8888"), authorities);
+    }
+}
+```
+
+#### 2.查询数据库完成认证
+
+在Spring Boot中整合Mybatis，完成自定义登录
+
+①创建数据库和数据库表
+
+```sql
+CREATE TABLE `security_user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `username` varchar(100) DEFAULT NULL COMMENT '用户名',
+  `password` varchar(100) DEFAULT NULL COMMENT '密码',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+```
+
+②创建对应的实体类，编写查询数据库
+
+……
+
+③
+
+
+
+
+
+### 二、授权

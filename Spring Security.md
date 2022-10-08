@@ -416,7 +416,42 @@ CREATE TABLE `security_user` (
 
 ……略
 
-③
+③在自定义实现类中调用查询方法，查询用户信息
+
+```java
+@Resource
+private UserMapper userMapper;
+
+@Override
+public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    //查询数据库
+    val user = userMapper.selectUserByName(username);
+    //判断用户是否存在
+    if (user == null) throw new UsernameNotFoundException("用户不存在！");
+    //设置用户权限，后面会从数据库查
+    List<GrantedAuthority> authorities =
+        AuthorityUtils.commaSeparatedStringToAuthorityList("admin,user");
+    //根据查到的用户生成Security中的User对象，并返回
+    return new User(user.getUsername(), bCryptPwdEncoder.encode(user.getPassword()), authorities);
+}
+```
+
+==注意==：
+
+这里的用户查询不需要加密码，
+
+是因为我们在查到用户之后会封装成Security中的User对象并返回，
+
+Security拿到该对象会使用内置的默认验证方法去进行密码验证（用User中的密码和我们输入的密码进行加密匹配）
+
+#### 3.自定义用户登录页面
+
+<span style="color:blue;">同时配置放行路径</span>，只需要在配置类中实现相关的配置即可
+
+```java
+```
+
+
 
 
 

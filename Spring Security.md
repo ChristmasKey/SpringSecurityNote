@@ -412,9 +412,9 @@ CREATE TABLE `security_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 ```
 
-②创建对应的实体类，编写查询数据库
+②创建对应的实体类，编写Mapper查询数据库
 
-……
+……略
 
 ③
 

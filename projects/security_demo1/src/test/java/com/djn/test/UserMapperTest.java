@@ -13,7 +13,7 @@ public class UserMapperTest {
 
     @Test
     public void testUserMapper() {
-        User stone = userMapper.getUserByName("SpringStone");
+        User stone = userMapper.selectUserByName("SpringStone");
         System.out.println(stone);
     }
 }

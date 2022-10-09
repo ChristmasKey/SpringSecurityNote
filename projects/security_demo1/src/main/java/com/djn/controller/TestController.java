@@ -22,4 +22,9 @@ public class TestController {
     public String add() {
         return "Hello Security";
     }
+
+    @GetMapping("/index")
+    public String index() {
+        return "hello index";
+    }
 }

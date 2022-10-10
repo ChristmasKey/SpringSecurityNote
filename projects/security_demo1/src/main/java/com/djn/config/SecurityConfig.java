@@ -77,7 +77,9 @@ public class SecurityConfig implements WebMvcConfigurer {
                 .antMatchers("/", "/test/hello") //设置匹配的路径
                 .permitAll()    //设置访问权限级别：全部允许
                 //当前登录用户，只有具有admin权限才可以访问这个路径
-                .antMatchers("/test/index").hasAuthority("admin")
+                // .antMatchers("/test/index").hasAuthority("admin")
+                //当前登录用户，具有提供的权限列表中的任一权限即可访问这个路径
+                .antMatchers("/test/index").hasAnyAuthority("admin", "user", "visitor")
                 .anyRequest().authenticated()   //限制任何请求必须是“被认证的”
                 .and()
                 .csrf().disable()   //关闭CSRF防护

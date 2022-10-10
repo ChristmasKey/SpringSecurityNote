@@ -547,13 +547,22 @@ public class SecurityConfig implements WebMvcConfigurer {
 
 ②在自定义实现类（MyUserDetailsService）中，为返回的User对象设置权限
 
-（见上文）
+```java
+//设置用户权限，后面会从数据库查
+List<GrantedAuthority> authorities =
+    AuthorityUtils.commaSeparatedStringToAuthorityList("admin,user");
+```
 
+==hasAnyAuthority方法==：如果当前主体有提供的权限列表中的任意一个的话，返回true
 
+①在配置类中给访问地址设置允许访问的权限列表
 
-==hasAnyAuthority方法==：
+```java
+//当前登录用户，具有提供的权限列表中的任一权限即可访问这个路径
+.antMatchers("/test/index").hasAnyAuthority("admin", "user", "visitor")
+```
 
-
+②同上
 
 ==hasRole方法==：
 

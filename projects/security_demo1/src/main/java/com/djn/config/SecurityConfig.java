@@ -79,11 +79,17 @@ public class SecurityConfig implements WebMvcConfigurer {
                 //当前登录用户，只有具有admin权限才可以访问这个路径
                 // .antMatchers("/test/index").hasAuthority("admin")
                 //当前登录用户，具有提供的权限列表中的任一权限即可访问这个路径
-                .antMatchers("/test/index").hasAnyAuthority("admin", "user", "visitor")
+                // .antMatchers("/test/index").hasAnyAuthority("admin", "user", "visitor")
+                //当前登录的用户，只有是sale角色时才可以访问这个路径
+                // .antMatchers("/test/index").hasRole("sale")
+                //当前登录用户，是提供的角色列表中的任意角色即可访问这个路径
+                .antMatchers("/test/index").hasAnyRole("sale", "manage")
                 .anyRequest().authenticated()   //限制任何请求必须是“被认证的”
                 .and()
                 .csrf().disable()   //关闭CSRF防护
         ;
+        //自定义没有访问权限时的跳转页面
+        http.exceptionHandling().accessDeniedPage("/unauth.html");
         return http.build();
     }
 }

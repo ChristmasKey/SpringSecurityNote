@@ -31,7 +31,7 @@ public class MyUserDetailsService implements UserDetailsService {
         if (user == null) throw new UsernameNotFoundException("用户不存在！");
         //设置用户权限，后面会从数据库查
         List<GrantedAuthority> authorities =
-                AuthorityUtils.commaSeparatedStringToAuthorityList("admin,user");
+                AuthorityUtils.commaSeparatedStringToAuthorityList("admin,user,ROLE_sale,ROLE_manage");
         //根据查到的用户生成Security中的User对象，并返回
         return new User(user.getUsername(), bCryptPwdEncoder.encode(user.getPassword()), authorities);
     }

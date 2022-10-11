@@ -54,10 +54,13 @@ public class OldSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/", "/test/hello")
                 .permitAll()
                 // .antMatchers("/test/index").hasAuthority("admin")
-                .antMatchers("/test/index").hasAnyAuthority("admin", "user", "visitor")
+                // .antMatchers("/test/index").hasAnyAuthority("admin", "user", "visitor")
+                // .antMatchers("/test/index").hasRole("sale")
+                .antMatchers("/test/index").hasAnyRole("sale", "manage")
                 .anyRequest().authenticated()
                 .and()
                 .csrf().disable()
         ;
+        http.exceptionHandling().accessDeniedPage("/unauth.html");
     }
 }

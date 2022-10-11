@@ -564,9 +564,104 @@ List<GrantedAuthority> authorities =
 
 ②同上
 
-==hasRole方法==：
+==hasRole方法==：如果当前主体具备指定角色，则返回true（如果用户具备给定角色就允许访问，否则返回403状态码）
+
+①在配置类中给访问地址设置角色限制
+
+```java
+//当前登录的用户，只有是sale角色时才可以访问这个路径
+.antMatchers("/test/index").hasRole("sale")
+```
+
+②在自定义实现类（MyUserDetailsService）中，为返回的User对象设置角色
+
+```java
+//设置用户权限，后面会从数据库查
+List<GrantedAuthority> authorities =
+    AuthorityUtils.commaSeparatedStringToAuthorityList("admin,user,ROLE_sale");
+```
+
+<strong style="color:red;">注意：角色会加上 `ROLE_` 前缀用以区分权限，从源码可知</strong>
+
+![hasRole源码1](./images/hasRole源码1.png)
+
+![hasRole源码2](./images/hasRole源码2.png)
+
+==hasAnyRole方法==：如果当前主体是提供的角色列表中的任意一个的话，返回true
+
+①在配置类中给访问地址设置允许访问的角色列表
+
+```java
+//当前登录用户，是提供的角色列表中的任意角色即可访问这个路径
+.antMatchers("/test/index").hasAnyRole("sale", "manage")
+```
+
+②在自定义实现类（MyUserDetailsService）中，为返回的User对象设置角色
+
+```java
+//设置用户权限，后面会从数据库查
+List<GrantedAuthority> authorities =
+    AuthorityUtils.commaSeparatedStringToAuthorityList("admin,user,ROLE_sale,ROLE_manage");
+```
+
+#### 2.自定义403页面
+
+```java
+//自定义没有访问权限时的跳转页面
+http.exceptionHandling().accessDeniedPage("/unauth.html");
+```
+
+自定义403页面
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>没有权限</title>
+    </head>
+    <body>
+        <h1>没有访问权限！</h1>
+    </body>
+</html>
+```
+
+#### 3.注解使用
+
+<span style="color:blue;">使用注解先要开启注解功能</span>
+
+```java
+@SpringBootApplication
+@EnableGlobalMethodSecurity(securedEnabled = true)
+public class SecurityDemo1Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SecurityDemo1Application.class, args);
+    }
+
+}
+```
+
+##### @secured
+
+ 判断是否具有角色（<span style="color:red;">注意：这里匹配的字符串需要添加前缀“`ROLE_`”</span>）
 
 
 
-==hasAnyRole方法==：
+##### @PreAuthorize
 
+
+
+##### @PostAuthorize
+
+
+
+##### @PostFilter
+
+
+
+##### @PreFilter
+
+
+
+##### 权限表达式

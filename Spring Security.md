@@ -628,7 +628,11 @@ http.exceptionHandling().accessDeniedPage("/unauth.html");
 
 #### 3.注解使用
 
-<span style="color:blue;">使用注解先要开启注解功能</span>
+##### @secured
+
+ 判断是否具有角色（<span style="color:red;">注意：这里匹配的字符串需要添加前缀“`ROLE_`”</span>）
+
+①使用注解前要开启注解功能
 
 ```java
 @SpringBootApplication
@@ -642,25 +646,118 @@ public class SecurityDemo1Application {
 }
 ```
 
-##### @secured
+②在Controller的方法上使用注解，设置角色
 
- 判断是否具有角色（<span style="color:red;">注意：这里匹配的字符串需要添加前缀“`ROLE_`”</span>）
+```java
+@GetMapping("/update")
+@Secured({"ROLE_sale", "ROLE_manager"})
+public String update() {
+    return "hello update";
+}
+```
+
+③在UserDetailsService中设置用户角色
+
+。。。略
 
 
 
 ##### @PreAuthorize
 
+进入方法前的权限验证，此注解可以将登录用户的roles/permissions参数传到方法中
+
+①先开启注解功能
+
+```java
+@SpringBootApplication
+@EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
+public class SecurityDemo1Application {
+    ...
+}
+```
+
+②在Controller的方法上添加注解
+
+```java
+@GetMapping("/confirm")
+// @PreAuthorize("hasRole('ROLE_sale')")
+@PreAuthorize("hasAnyAuthority('admin')")
+public String confirm() {
+    return "hello confirm";
+}
+```
+
+③在UserDetailsService中设置用户权限
+
+。。。略
+
 
 
 ##### @PostAuthorize
+
+此注解使用不多，在<span style="color:red;">方法执行之后</span>再进行权限验证，适合验证带有返回值的权限
+
+①先开启注解功能（与上一个注解共用同一个注解开启属性）
+
+②在Controller的方法上添加注解
+
+```java
+@GetMapping("/postConfirm")
+@PostAuthorize("hasAuthority('admins')")
+public String postConfirm() {
+    System.out.println("postConfirm...");
+    return "hello postConfirm";
+}
+```
+
+③在UserDetailsService中设置用户权限
+
+。。。略
 
 
 
 ##### @PostFilter
 
+权限验证之后对方法的返回值进行过滤
+
+```java
+@RequestMapping("/getAll")
+@PreAuthorize("hasRole('ROLE_manage')")
+@PostFilter("filterObject.username != 'admin1'")
+public List<User> getAllUser() {
+    List<User> users = new ArrayList<>();
+    users.add(User.builder().id(1).username("admin1").password("admin1@123").build());
+    users.add(User.builder().id(2).username("admin2").password("admin2@123").build());
+    users.add(User.builder().id(3).username("admin3").password("admin3@123").build());
+    return users;
+}
+```
+
+![PostFilter运行结果](./images/PostFilter运行结果.png)
+
 
 
 ##### @PreFilter
+
+执行Controller的方法之前对方法的参数进行过滤
+
+```java
+@PostMapping("/testPreFilter")
+@PreAuthorize("hasRole('ROLE_sale')")
+@PreFilter(value = "filterObject.id % 2 == 0")
+public List<User> getTestPreFilter(@RequestBody List<User> list) {
+    list.forEach(it -> {
+        System.out.println(it.getId() + "\t" + it.getUsername());
+    });
+    return list;
+}
+```
+
+![PreFilter运行结果](./images/PreFilter运行结果.png)
+
+preFilter测试接口的请求头如下：
+
+![preFilter测试接口的请求头](./images/preFilter测试接口的请求头.png)
 
 
 

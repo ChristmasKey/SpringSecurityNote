@@ -83,7 +83,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                 //当前登录的用户，只有是sale角色时才可以访问这个路径
                 // .antMatchers("/test/index").hasRole("sale")
                 //当前登录用户，是提供的角色列表中的任意角色即可访问这个路径
-                .antMatchers("/test/index").hasAnyRole("sale", "manage")
+                // .antMatchers("/test/index").hasAnyRole("sale", "manage")
                 .anyRequest().authenticated()   //限制任何请求必须是“被认证的”
                 .and()
                 .csrf().disable()   //关闭CSRF防护

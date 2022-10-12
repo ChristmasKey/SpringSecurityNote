@@ -1,8 +1,15 @@
 package com.djn.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.djn.entity.User;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PostFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreFilter;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Name: TestController
@@ -26,5 +33,46 @@ public class TestController {
     @GetMapping("/index")
     public String index() {
         return "hello index";
+    }
+
+    @GetMapping("/update")
+    @Secured({"ROLE_sale", "ROLE_manager"})
+    public String update() {
+        return "hello update";
+    }
+
+    @GetMapping("/confirm")
+    // @PreAuthorize("hasRole('ROLE_sale')")
+    @PreAuthorize("hasAnyAuthority('admin')")
+    public String confirm() {
+        return "hello confirm";
+    }
+
+    @GetMapping("/postConfirm")
+    @PostAuthorize("hasAuthority('admins')")
+    public String postConfirm() {
+        System.out.println("postConfirm...");
+        return "hello postConfirm";
+    }
+
+    @GetMapping("/getAll")
+    @PreAuthorize("hasRole('ROLE_manage')")
+    @PostFilter("filterObject.username != 'admin1'")
+    public List<User> getAllUser() {
+        List<User> users = new ArrayList<>();
+        users.add(User.builder().id(1).username("admin1").password("admin1@123").build());
+        users.add(User.builder().id(2).username("admin2").password("admin2@123").build());
+        users.add(User.builder().id(3).username("admin3").password("admin3@123").build());
+        return users;
+    }
+
+    @PostMapping("/testPreFilter")
+    @PreAuthorize("hasRole('ROLE_sale')")
+    @PreFilter(value = "filterObject.id % 2 == 0")
+    public List<User> getTestPreFilter(@RequestBody List<User> list) {
+        list.forEach(it -> {
+            System.out.println(it.getId() + "\t" + it.getUsername());
+        });
+        return list;
     }
 }

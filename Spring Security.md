@@ -762,3 +762,30 @@ preFilter测试接口的请求头如下：
 
 
 ##### 权限表达式
+
+https://docs.spring.io/spring-security/site/docs/5.3.4.RELEASE/reference/html5/#el-access
+
+
+
+### 三、用户注销
+
+首先，在登录页面添加一个退出功能
+
+```html
+<body>
+    登录成功<br>
+    <a href="/logout">退出</a>
+</body>
+```
+
+
+
+然后，在配置类中添加退出映射地址
+
+```java
+http.logout().logoutUrl("/logout").logoutSuccessUrl("/index").permitAll();
+```
+
+
+
+测试：退出之后，是无法访问需要登录认证的路径的 

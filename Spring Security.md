@@ -769,23 +769,119 @@ https://docs.spring.io/spring-security/site/docs/5.3.4.RELEASE/reference/html5/#
 
 ### 三、用户注销
 
-首先，在登录页面添加一个退出功能
+首先，在登录成功页面添加一个退出功能：success.html
 
 ```html
 <body>
     登录成功<br>
-    <a href="/logout">退出</a>
+    <a href="/user/logout">退出</a>
 </body>
 ```
-
-
 
 然后，在配置类中添加退出映射地址
 
 ```java
-http.logout().logoutUrl("/logout").logoutSuccessUrl("/index").permitAll();
+//设置登录成功之后默认跳转的资源页面
+http.formLogin().loginPage("/login.html").loginProcessingUrl("/user/login").defaultSuccessUrl("/success.html").permitAll();
+
+//自定义用户退出登录
+http.logout().logoutUrl("/user/logout").logoutSuccessUrl("/test/hello").permitAll();
 ```
 
-
-
 测试：退出之后，是无法访问需要登录认证的路径的 
+
+
+
+### 四、RememberMe
+
+#### 底层实现原理
+
+
+
+![remember-me底层实现原理](./images/remember-me底层实现原理.png)
+
+Spring Security中RememberMe功能的底层封装原理
+
+![Spring Security中RememberMe功能的底层封装原理](./images/Spring Security中RememberMe功能的底层封装原理.png)
+
+
+
+#### 基于数据库的记住我
+
+1.创建数据库表
+
+```sql
+CREATE TABLE persistent_logins (
+	series VARCHAR ( 64 ) NOT NULL,
+	username VARCHAR ( 64 ) NOT NULL,
+	token VARCHAR ( 64 ) NOT NULL,
+	last_used TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	PRIMARY KEY ( `series` ) 
+) ENGINE = INNODB DEFAULT CHARSET = utf8;
+```
+
+2.在配置类中，注入数据源、配置操作数据库的对象
+
+```java
+    /**
+     * 注入配置文件中的数据源
+     */
+    @Resource
+    private DataSource dataSource;
+
+    /**
+     * 向Spring容器中注入 PersistentTokenRepository对象，用于操作数据库（向表中存储 token 和 username）
+     *
+     * @return org.springframework.security.web.authentication.rememberme.PersistentTokenRepository
+     * @date 2022/10/14 16:23
+     */
+    @Bean
+    public PersistentTokenRepository getPersistentTokenRepository() {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        //设置数据源
+        jdbcTokenRepository.setDataSource(dataSource);
+        //设置项目启动时是否在数据库中建表
+        //jdbcTokenRepository.setCreateTableOnStartup(true);
+        return jdbcTokenRepository;
+    }
+```
+
+3.在配置类中注入自定义的UserDetailsService对象
+
+```java
+    /**
+     * 注入自定义的UserDetailsService
+     */
+    @Resource
+    private MyUserDetailsService myUserDetailsService;
+```
+
+==注意==：此处的**自定义UserDetailsService对象**用到了配置类中注册的**PasswordEncoder对象**，这会导致依赖死循环。
+
+​			我们需要将**PasswordEncoder对象**单独拎出来注册（在PasswordEncoderConfig配置类中注册）。
+
+4.配置“记住我”功能
+
+```java
+http
+    //开启“记住我”功能
+    .rememberMe()
+    .tokenRepository(getPersistentTokenRepository())  //设置数据库操作对象
+    .tokenValiditySeconds(60) //设置token有效期（单位：秒）
+    .userDetailsService(myUserDetailsService)  //设置查询数据库的UserDetailsService对象
+```
+
+5.在页面中添加“记住我”功能
+
+```html
+<label for="rememberMe">
+    <!--注意：name必须为“remember-me”，否则框架底层无法识别该表单项的值-->
+    <input type="checkbox" id="rememberMe" name="remember-me">Auto Login
+</label>
+```
+
+6.测试
+
+第一次勾选“自动登录”选项成功登录之后，可以访问`/test/index`；
+
+然后关闭浏览器，重新访问`/test/index`，不需要重新登录。

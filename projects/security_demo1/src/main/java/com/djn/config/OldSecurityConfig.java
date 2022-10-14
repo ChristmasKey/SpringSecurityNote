@@ -8,8 +8,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.annotation.Resource;
+import javax.sql.DataSource;
 
 /**
  * Name: OldSecurityConfig
@@ -26,6 +29,17 @@ public class OldSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Resource
     private MyUserDetailsService myUserDetailsService;
+
+    @Resource
+    private DataSource dataSource;
+
+    //@Bean
+    public PersistentTokenRepository getPersistentTokenRepository() {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        jdbcTokenRepository.setDataSource(dataSource);
+        //jdbcTokenRepository.setCreateTableOnStartup(true);
+        return jdbcTokenRepository;
+    }
 
     // @Bean
     public PasswordEncoder getPasswordEncoder() {
@@ -58,6 +72,11 @@ public class OldSecurityConfig extends WebSecurityConfigurerAdapter {
                 // .antMatchers("/test/index").hasRole("sale")
                 .antMatchers("/test/index").hasAnyRole("sale", "manage")
                 .anyRequest().authenticated()
+                .and()
+                .rememberMe()
+                .tokenRepository(getPersistentTokenRepository())
+                .tokenValiditySeconds(60)
+                .userDetailsService(myUserDetailsService)
                 .and()
                 .csrf().disable()
         ;

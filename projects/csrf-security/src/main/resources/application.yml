@@ -1,0 +1,13 @@
+server:
+  port: 9988
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql:///spring_stone?useUnicode=true&characterEncode=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 1234
+mybatis:
+  type-aliases-package: com.djn.entity
+  mapper-locations: classpath:mybatis/mapper/*Mapper.xml
+  configuration:
+    map-underscore-to-camel-case: true

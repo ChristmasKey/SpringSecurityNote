@@ -921,11 +921,186 @@ Spring Security CSRF会针对**PATCH、POST、PUT和DELETE**方法进行防护�
 在登录页面添加一个隐藏域
 
 ```html
-
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>CSRF_test</title>
+    </head>
+    <body>
+        <div>
+            <form action="/update_token" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label for="username">
+                    Username: <input type="text" name="username" id="username">
+                </label><br>
+                <label for="password">
+                    Password: <input type="password" id="password" name="password">
+                </label><br>
+                <input type="submit" th:value="修改">
+            </form>
+        </div>
+    </body>
+</html>
 ```
 
 关闭安全配置类中的csrf
 
 ```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public PasswordEncoder getPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain getSecurityFilterChain(HttpSecurity http) throws Exception {
+        //配置URL的访问权限
+        http.authorizeRequests()
+                .antMatchers("/").permitAll()
+                .antMatchers("/**update**").permitAll()
+                .antMatchers("/login/**").permitAll()
+                .anyRequest().authenticated();
+
+        //使用自定义的登录窗口
+        http.formLogin()
+                .loginPage("/userLogin").permitAll()
+                .usernameParameter("username").passwordParameter("password")
+                .defaultSuccessUrl("/")
+                .failureUrl("/userLogin?error");
+
+        //关闭CSRF防护
+        // http.csrf().disable();
+
+        return http.build();
+    }
+}
 ```
 
+登录后查看token值
+
+```html
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>CSRF_token</title>
+    </head>
+    <body>
+        <span th:text="${_csrf.token}"></span>
+        <!--<h1>hello Spring</h1>-->
+    </body>
+</html>
+```
+
+
+
+## 微服务权限方案
+
+<strong style="color:blue;">微服务的由来</strong>
+
+ 微服务架构风格是一种`使用一套小服务来开发单个应用`的方式，
+
+每个服务运行在自己的进程中，并使用轻量级机制通信，通常是**HTTP API**
+
+这些服务基于能力构建，并能够通过自动化部署机制来**独立部署**，
+
+这些服务使用不同的编程语言实现，以及不同数据存储技术，并保持最低限度的集中式管理。
+
+<strong style="color:red;">微服务的优势</strong>
+
+- 微服务每个模块就相当于一个单独的项目，代码量明显减少，遇到问题也相对来说比较好解决
+- 微服务每个模块都可以使用不同的存储方式（比如有的用redis、有的用MySQL等），数据库也是单个模块对应自己的数据库
+- 微服务每个模块都可以使用不同的开发技术，开发模式更灵活
+
+<strong style="color:green;">微服务的本质</strong>
+
+（1）微服务，关键其实不仅仅是微服务本身，而是系统要提供一套基础的架构，这种架构使得微服务可以独立的部署、运行、升级，不仅如此，这个系统架构还让微服务与微服务之间在结构上“松耦合”，而在功能上则表现为一个统一的整体。
+
+这种所谓的“统一的整体”表现出来的是统一风格的界面，统一的权限管理，统一的安全策略，统一的上线过程，统一的日志和审计方法，统一的调度方式，统一的访问入口等等。
+
+（2）微服务的目的是有效的拆分应用，实现敏捷开发和部署。
+
+
+
+### 认证与授权实现思路
+
+#### 1、认证授权过程分析
+
+（1）如果是基于Session，那么Spring Security会对cookie里的sessionid进行解析，找到服务器存储的session信息，然后判断当前用户是否符合请求的要求
+
+（2）如果是token，则是解析出token，然后将当前请求加入到Spring Security管理的权限信息中去
+
+![微服务中认证授权过程](./images/微服务中认证授权过程.png)
+
+
+
+### 实现案例
+
+#### 1、需求分析
+
+- 登录（认证）
+- 添加角色
+- 为角色分配菜单
+- 添加用户
+- 为用户分配角色
+
+
+
+#### 2、数据模型
+
+![数据模型](./images/数据模型.png)
+
+#### 3、技术说明
+
+> 1、Maven
+>
+> - 创建父工程：管理项目依赖版本
+> - 创建子模块：使用具体依赖
+>
+> 2、SpringBoot
+>
+> - 本质就是Spring
+>
+> 3、MyBatis
+>
+> 4、SpringCloud
+>
+> - GateWay 网关
+> - 注册中心
+>
+> 其他技术：
+>
+> Redis、JWT、Swagger
+>
+> 前端技术
+
+
+
+#### 4、项目搭建
+
+①创建父工程 acl_parent：管理依赖版本
+
+②在父工程创建子模块
+
+（1）**common**
+
+- service_base：工具类
+- spring_security：权限配置
+
+（2）**infrastructure**
+
+- api_gateway：网关
+
+（3）**service**
+
+- service_acl：权限管理微服务模块
+
+![微服务案例-项目工程结构解析](./images/微服务案例-项目工程结构解析.png)
+
+
+
+#### 5、引入项目依赖

@@ -1104,3 +1104,120 @@ public class SecurityConfig {
 
 
 #### 5、引入项目依赖
+
+父工程依赖管理
+
+```xml
+<properties>
+    <java.version>1.8</java.version>
+    <mybatis.version>2.2.2</mybatis.version>
+    <mysql-connector.version>8.0.30</mysql-connector.version>
+    <druid.version>1.2.11</druid.version>
+    <swagger.version>3.0.0</swagger.version>
+    <jwt.version>0.9.0</jwt.version>
+    <fastjson.version>1.2.83</fastjson.version>
+    <gson.version>2.8.9</gson.version>
+    <json.version>20211205</json.version>
+    <cloud-alibaba.version>0.2.2.RELEASE</cloud-alibaba.version>
+</properties>
+
+<dependencyManagement>
+    <dependencies>
+        <!--Spring Cloud-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>Hoxton.RELEASE</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+            <version>${cloud-alibaba.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+        <!--MyBatis-->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+            <version>${mybatis.version}</version>
+        </dependency>
+        <!--MySQL Connector-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql-connector.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!--Druid-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>${druid.version}</version>
+        </dependency>
+        <!--gson-->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
+        </dependency>
+        <!--swagger-->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+        <!--swagger ui-->
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+        <!--JWT-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>${jwt.version}</version>
+        </dependency>
+        <!--JSON相关工具-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json.version}</version>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+
+
+==各个子模块的依赖详见acl_parent项目==
+
+
+
+#### 6、启动redis和nacos
+
+**Linux**
+
+启动redis：`redis-service  redis.conf`
+
+访问redis：`redis-cli`
+
+**Windows**
+
+启动nacos：`startup.cmd -m standalone`
+
+![启动nacos](./images/启动nacos.png)
+
+访问地址：http://localhost:8848/nacos/
+
+默认用户名和密码：nacos
+
+![nacos首页](./images/nacos首页.png)
